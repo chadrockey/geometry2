@@ -86,9 +86,11 @@ public:
    * @param authority The source of this transform (for debugging)
    * @param is_static If true, this transform is constant over time
    * @return true if the transform was successfully added; false if a frame ID
-   *         is empty, starts with '/', or the transform contains NaN values
+   *         is empty, both frames resolve to the same name, the transform
+   *         contains NaN values, or the quaternion is denormalized.
+   *         Note: leading '/' characters are silently stripped from frame IDs.
    */
-  bool setTransform(
+  [[nodiscard]] bool setTransform(
     const std::string & parent_frame,
     const std::string & child_frame,
     const tf2::Transform & transform,
@@ -106,8 +108,9 @@ public:
    * @throws tf2::InvalidArgumentException if a frame ID is empty or starts with '/'
    * @throws tf2::LookupException if a frame doesn't exist
    * @throws tf2::ConnectivityException if frames are not connected
-   * @throws tf2::ExtrapolationException if time is outside the cache (includes
-   *         PastExtrapolationException and FutureExtrapolationException subtypes)
+   * @throws tf2::ExtrapolationException if time is outside the cache (subtypes:
+   *         BackwardExtrapolationException, ForwardExtrapolationException,
+   *         NoDataForExtrapolationException)
    */
   tf2::Transform lookupTransform(
     const std::string & target_frame,
@@ -127,8 +130,9 @@ public:
    * @throws tf2::InvalidArgumentException if a frame ID is empty or starts with '/'
    * @throws tf2::LookupException if a frame doesn't exist
    * @throws tf2::ConnectivityException if frames are not connected
-   * @throws tf2::ExtrapolationException if time is outside the cache (includes
-   *         PastExtrapolationException and FutureExtrapolationException subtypes)
+   * @throws tf2::ExtrapolationException if time is outside the cache (subtypes:
+   *         BackwardExtrapolationException, ForwardExtrapolationException,
+   *         NoDataForExtrapolationException)
    */
   tf2::Transform lookupTransform(
     const std::string & target_frame,
