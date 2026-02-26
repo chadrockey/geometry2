@@ -104,9 +104,11 @@ public:
    * @param source_frame The frame to transform from
    * @param time The time at which to look up the transform (TimePointZero for latest)
    * @return The transform from source_frame to target_frame
+   * @throws tf2::InvalidArgumentException if a frame ID is empty or starts with '/'
    * @throws tf2::LookupException if a frame doesn't exist
    * @throws tf2::ConnectivityException if frames are not connected
-   * @throws tf2::ExtrapolationException if time is outside the cache
+   * @throws tf2::ExtrapolationException if time is outside the cache (includes
+   *         PastExtrapolationException and FutureExtrapolationException subtypes)
    */
   tf2::Transform lookupTransform(
     const std::string & target_frame,
@@ -122,9 +124,11 @@ public:
    * @param source_time The time at which the source frame should be evaluated
    * @param fixed_frame The frame in which to assume the transform is constant
    * @return The transform from source_frame to target_frame
+   * @throws tf2::InvalidArgumentException if a frame ID is empty or starts with '/'
    * @throws tf2::LookupException if a frame doesn't exist
    * @throws tf2::ConnectivityException if frames are not connected
-   * @throws tf2::ExtrapolationException if time is outside the cache
+   * @throws tf2::ExtrapolationException if time is outside the cache (includes
+   *         PastExtrapolationException and FutureExtrapolationException subtypes)
    */
   tf2::Transform lookupTransform(
     const std::string & target_frame,
