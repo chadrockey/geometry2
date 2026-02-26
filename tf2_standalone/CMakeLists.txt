@@ -46,7 +46,7 @@ if(NOT BUILD_SHARED_LIBS)
       tf2::tf2
       ${geometry_msgs_TARGETS}
   )
-  # tf2's public headers (LinearMath, time.hpp) are copied at install time,
+  # tf2's public headers (LinearMath, time.hpp, exceptions.hpp) are copied at install time,
   # so consumers don't need find_package(tf2).
   # We still need tf2's include dirs at build time for our own headers.
   target_include_directories(${PROJECT_NAME}
@@ -252,5 +252,8 @@ if(BUILD_TESTING)
   endif()
 endif()
 
-# Ament is the build system, but this package is not intended for running in a ROS environment, so we don't declare any ROS dependencies or exports.
+# Ament is the build system, but this package is not intended for installation
+# into a ROS environment. The shared library build exists so that colcon
+# workspaces including this package don't break; standalone distribution uses
+# the static build via build_debs.sh.
 ament_package()

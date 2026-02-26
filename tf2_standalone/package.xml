@@ -12,8 +12,13 @@
     - tf2::TimePoint, tf2::Duration (std::chrono based, from tf2/time.hpp)
     - std::string for frame IDs
 
-    At build time, copies tf2's LinearMath headers, time.hpp, and
-    visibility_control.h. Builds both static and shared libraries.
+    At build time, copies tf2's LinearMath headers, time.hpp, exceptions.hpp,
+    and visibility_control.h. Builds as a static library (for standalone .deb
+    packaging) or as a shared library (for colcon/ament workspace builds).
+
+    Note: this package uses ament as its build system but is not intended for
+    installation into a ROS environment. The shared library build exists to
+    avoid breaking colcon workspaces that include this package.
   </description>
 
   <maintainer email="alejandro@openrobotics.org">Alejandro Hernandez Cordero</maintainer>
