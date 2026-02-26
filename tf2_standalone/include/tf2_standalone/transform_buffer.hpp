@@ -43,7 +43,7 @@ namespace tf2_standalone
 {
 
 /// Default cache time for transforms (10 seconds)
-static constexpr tf2::Duration DEFAULT_CACHE_TIME = std::chrono::seconds(10);
+inline constexpr tf2::Duration DEFAULT_CACHE_TIME = std::chrono::seconds(10);
 
 /**
  * @brief A standalone transform buffer that wraps tf2::BufferCore.
