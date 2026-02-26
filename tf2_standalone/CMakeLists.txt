@@ -53,8 +53,6 @@ if(NOT BUILD_SHARED_LIBS)
     PUBLIC
       $<BUILD_INTERFACE:$<TARGET_PROPERTY:tf2::tf2,INTERFACE_INCLUDE_DIRECTORIES>>
   )
-
-  target_compile_definitions(${PROJECT_NAME} PRIVATE TF2_STANDALONE_STATIC_BUILD)
 else()
   # Shared build: tf2 is PUBLIC (consumer links dynamically)
   target_link_libraries(${PROJECT_NAME}
@@ -186,17 +184,12 @@ endif()
 install(DIRECTORY ${TF2_INCLUDE_DIR}/tf2/LinearMath
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
 
-# Install visibility_control.h from tf2
-install(FILES ${TF2_INCLUDE_DIR}/tf2/visibility_control.h
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
-
-# Install time.hpp from tf2 (needed by public API)
-install(FILES ${TF2_INCLUDE_DIR}/tf2/time.hpp
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
-
-# Install exceptions.hpp from tf2 (needed by public API)
-install(FILES ${TF2_INCLUDE_DIR}/tf2/exceptions.hpp
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
+# Install individual tf2 headers needed by the public API
+install(FILES
+  ${TF2_INCLUDE_DIR}/tf2/visibility_control.h
+  ${TF2_INCLUDE_DIR}/tf2/time.hpp
+  ${TF2_INCLUDE_DIR}/tf2/exceptions.hpp
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
 
 if(BUILD_SHARED_LIBS)
   install(EXPORT ${PROJECT_NAME}-targets
