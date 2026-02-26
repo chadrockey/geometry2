@@ -244,7 +244,7 @@ TEST_F(TransformBufferTest, InvalidArgumentExceptionEmptyFrame)
 {
   // Populate the buffer so we hit argument validation, not "frame doesn't exist"
   tf2::Transform transform = tf2::Transform::getIdentity();
-  buffer_->setTransform("world", "base", transform, base_time_);
+  EXPECT_TRUE(buffer_->setTransform("world", "base", transform, base_time_));
 
   EXPECT_THROW(
     buffer_->lookupTransform("", "base", base_time_),
@@ -259,7 +259,7 @@ TEST_F(TransformBufferTest, InvalidArgumentExceptionSlashPrefix)
 {
   // Populate the buffer so we hit argument validation, not "frame doesn't exist"
   tf2::Transform transform = tf2::Transform::getIdentity();
-  buffer_->setTransform("world", "base", transform, base_time_);
+  EXPECT_TRUE(buffer_->setTransform("world", "base", transform, base_time_));
 
   EXPECT_THROW(
     buffer_->lookupTransform("/world", "base", base_time_),
