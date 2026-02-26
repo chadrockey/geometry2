@@ -28,6 +28,10 @@
   <!-- Test dependencies -->
   <test_depend>ament_cmake_gtest</test_depend>
 
+  <!-- tf2_standalone installs tf2's LinearMath headers and bundles libtf2
+       in its static archive, so it cannot coexist with tf2 at install time. -->
+  <conflict>tf2</conflict>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>
