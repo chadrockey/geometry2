@@ -43,7 +43,6 @@ namespace tf2_standalone
 namespace
 {
 
-// Convert tf2::Transform to geometry_msgs::msg::TransformStamped
 geometry_msgs::msg::TransformStamped toMsg(
   const std::string & parent_frame,
   const std::string & child_frame,
@@ -76,7 +75,6 @@ geometry_msgs::msg::TransformStamped toMsg(
   return msg;
 }
 
-// Convert geometry_msgs::msg::TransformStamped to tf2::Transform
 tf2::Transform fromMsg(const geometry_msgs::msg::TransformStamped & msg)
 {
   tf2::Vector3 origin(
@@ -95,7 +93,6 @@ tf2::Transform fromMsg(const geometry_msgs::msg::TransformStamped & msg)
 
 }  // namespace
 
-// PIMPL implementation
 class TransformBuffer::Impl
 {
 public:
