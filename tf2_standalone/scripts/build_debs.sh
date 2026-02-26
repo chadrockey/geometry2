@@ -40,6 +40,8 @@ echo "==> Building .debs for ${ARCH} (${MULTIARCH})"
 # --- Step 0: Build tf2 with -fPIC ---
 # The fat .so requires all bundled object files to be position-independent.
 # Rebuild tf2 as a static library with PIC into a local prefix.
+# RCUTILS_LOG_MIN_SEVERITY=5 suppresses all rcutils logging at compile time,
+# eliminating the runtime dependency on librcutils.
 echo "==> Step 0: Building tf2 with -fPIC..."
 
 TF2_SRC="${PKG_DIR}/../tf2"
