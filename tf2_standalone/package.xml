@@ -16,7 +16,8 @@
     visibility_control.h. Builds both static and shared libraries.
   </description>
 
-  <maintainer email="chadrockey@gmail.com">Chad Rockey</maintainer>
+  <maintainer email="alejandro@openrobotics.org">Alejandro Hernandez Cordero</maintainer>
+  <maintainer email="clalancette@openrobotics.org">Chris Lalancette</maintainer>
   <license>BSD-3-Clause</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
