@@ -49,7 +49,8 @@ cmake -B build_deb_tf2 -S "${TF2_SRC}" \
     -DCMAKE_INSTALL_PREFIX="${PKG_DIR}/build_deb_tf2_prefix" \
     -DCMAKE_INSTALL_LIBDIR=lib \
     -DCMAKE_BUILD_TYPE=Release \
-    -DBUILD_TESTING=OFF
+    -DBUILD_TESTING=OFF \
+    -DCMAKE_CXX_FLAGS="-DRCUTILS_LOG_MIN_SEVERITY=5"
 
 cmake --build build_deb_tf2 --parallel "$(nproc)"
 cmake --install build_deb_tf2

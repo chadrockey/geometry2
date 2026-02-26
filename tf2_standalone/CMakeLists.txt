@@ -12,7 +12,7 @@ set(PROJECT_VERSION ${tf2_standalone_VERSION})
 #
 # Build modes (controlled by BUILD_SHARED_LIBS):
 # - Shared (default): Links dynamically to libtf2.so, librcutils.so
-# - Static: Fully standalone, uses rcutils stubs
+# - Static: Fully standalone, rcutils logging disabled at compile time
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -54,10 +54,6 @@ if(NOT BUILD_SHARED_LIBS)
       $<BUILD_INTERFACE:$<TARGET_PROPERTY:tf2::tf2,INTERFACE_INCLUDE_DIRECTORIES>>
   )
 
-  # Build rcutils_stubs — these get merged into the fat archive
-  add_library(rcutils_stubs STATIC src/rcutils_stubs.cpp)
-  set_target_properties(rcutils_stubs PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
   target_compile_definitions(${PROJECT_NAME} PRIVATE TF2_STANDALONE_STATIC_BUILD)
 else()
   # Shared build: tf2 is PUBLIC (consumer links dynamically)
@@ -96,7 +92,7 @@ if(BUILD_SHARED_LIBS)
 else()
   # Static: install individual archives, then combine into a fat archive.
   # We don't use EXPORT here — we write a custom targets file below.
-  install(TARGETS ${PROJECT_NAME} rcutils_stubs
+  install(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
   )
@@ -112,7 +108,7 @@ else()
     set(_tf2_archive "${_tf2_libdir}/libtf2.a")
   endif()
 
-  # Create fat archive at install time: combine tf2_standalone + tf2 + rcutils_stubs
+  # Create fat archive at install time: combine tf2_standalone + tf2
   install(CODE "
     set(_workdir \"\${CMAKE_INSTALL_PREFIX}/lib/_fat_archive_tmp\")
     file(MAKE_DIRECTORY \${_workdir})
@@ -121,8 +117,7 @@ else()
     set(_idx 0)
     foreach(_lib
       \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
-      \"${_tf2_archive}\"
-      \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/librcutils_stubs.a\")
+      \"${_tf2_archive}\")
       if(EXISTS \${_lib})
         set(_subdir \"\${_workdir}/\${_idx}\")
         file(MAKE_DIRECTORY \${_subdir})
@@ -140,11 +135,25 @@ else()
       \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
       \${_objects} COMMAND_ERROR_IS_FATAL ANY)
 
-    # Cleanup: remove temp dir and the separate rcutils_stubs archive
+    # Cleanup
     file(REMOVE_RECURSE \${_workdir})
-    file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/librcutils_stubs.a\")
 
     message(STATUS \"Created fat archive: lib${PROJECT_NAME}.a\")
+
+    # Guard: verify that libtf2.a was compiled with RCUTILS_LOG_MIN_SEVERITY=5
+    # so the fat archive has zero rcutils symbol references.
+    execute_process(
+      COMMAND nm -u \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
+      OUTPUT_VARIABLE _nm_output
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    string(FIND \"\${_nm_output}\" \"rcutils\" _rcutils_pos)
+    if(NOT \${_rcutils_pos} EQUAL -1)
+      message(FATAL_ERROR
+        \"Fat archive lib${PROJECT_NAME}.a still contains rcutils symbols.\\n\"
+        \"libtf2.a must be compiled with -DRCUTILS_LOG_MIN_SEVERITY=5 to eliminate them.\\n\"
+        \"Undefined symbols found:\\n\${_nm_output}\")
+    endif()
+    message(STATUS \"Verified: no rcutils symbols in lib${PROJECT_NAME}.a\")
   ")
 endif()
 
@@ -232,18 +241,12 @@ if(BUILD_TESTING)
   if(ament_cmake_gtest_FOUND)
     ament_add_gtest(test_transform_buffer test/test_transform_buffer.cpp)
     target_link_libraries(test_transform_buffer ${PROJECT_NAME})
-    if(NOT BUILD_SHARED_LIBS)
-      target_link_libraries(test_transform_buffer rcutils_stubs)
-    endif()
   else()
     find_package(GTest QUIET)
     if(GTest_FOUND)
       enable_testing()
       add_executable(test_transform_buffer test/test_transform_buffer.cpp)
       target_link_libraries(test_transform_buffer ${PROJECT_NAME} GTest::gtest_main)
-      if(NOT BUILD_SHARED_LIBS)
-        target_link_libraries(test_transform_buffer rcutils_stubs)
-      endif()
       add_test(NAME test_transform_buffer COMMAND test_transform_buffer)
     endif()
   endif()
