@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(tf2_standalone LANGUAGES C CXX)
+project(tf2_standalone LANGUAGES CXX)
 find_package(ament_cmake REQUIRED)
 ament_package_xml()
 set(PROJECT_VERSION ${tf2_standalone_VERSION})
@@ -55,7 +55,7 @@ if(NOT BUILD_SHARED_LIBS)
   )
 
   # Build rcutils_stubs — these get merged into the fat archive
-  add_library(rcutils_stubs STATIC src/rcutils_stubs.c)
+  add_library(rcutils_stubs STATIC src/rcutils_stubs.cpp)
   set_target_properties(rcutils_stubs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
   target_compile_definitions(${PROJECT_NAME} PRIVATE TF2_STANDALONE_STATIC_BUILD)
