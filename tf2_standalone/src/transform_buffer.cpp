@@ -53,7 +53,6 @@ geometry_msgs::msg::TransformStamped toMsg(
 {
   geometry_msgs::msg::TransformStamped msg;
 
-  // Set header
   msg.header.frame_id = parent_frame;
   auto stamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     stamp.time_since_epoch());
@@ -62,16 +61,13 @@ geometry_msgs::msg::TransformStamped toMsg(
   msg.header.stamp.nanosec = static_cast<uint32_t>(
     (stamp_ns - stamp_sec).count());
 
-  // Set child frame
   msg.child_frame_id = child_frame;
 
-  // Set translation
   const tf2::Vector3 & origin = transform.getOrigin();
   msg.transform.translation.x = origin.x();
   msg.transform.translation.y = origin.y();
   msg.transform.translation.z = origin.z();
 
-  // Set rotation
   const tf2::Quaternion & rotation = transform.getRotation();
   msg.transform.rotation.x = rotation.x();
   msg.transform.rotation.y = rotation.y();
