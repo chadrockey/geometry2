@@ -50,7 +50,7 @@ static constexpr tf2::Duration DEFAULT_CACHE_TIME = std::chrono::seconds(10);
  *
  * This class provides a ROS-agnostic API for coordinate transforms.
  * The public API uses only:
- * - tf2::Transform, tf2::Quaternion, tf2::Vector3 (from tf2_types)
+ * - tf2::Transform, tf2::Quaternion, tf2::Vector3 (from tf2)
  * - tf2::TimePoint, tf2::Duration (std::chrono based)
  * - std::string for frame IDs
  *

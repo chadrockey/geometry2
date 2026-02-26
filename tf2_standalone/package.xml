@@ -9,11 +9,11 @@
     This library provides coordinate transform capabilities without requiring
     ROS headers or libraries at runtime. The public API uses only:
     - tf2::Transform, tf2::Quaternion, tf2::Vector3 (LinearMath types from tf2)
-    - tf2::TimePoint, tf2::Duration (std::chrono based, vendored time.hpp)
+    - tf2::TimePoint, tf2::Duration (std::chrono based, from tf2/time.hpp)
     - std::string for frame IDs
 
-    At build time, copies tf2's LinearMath headers. Vendors time.hpp to avoid
-    rcutils runtime dependency. Builds both static and shared libraries.
+    At build time, copies tf2's LinearMath headers, time.hpp, and
+    visibility_control.h. Builds both static and shared libraries.
   </description>
 
   <maintainer email="chadrockey@gmail.com">Chad Rockey</maintainer>

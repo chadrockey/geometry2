@@ -4,7 +4,7 @@ project(tf2_standalone VERSION 1.0.0 LANGUAGES C CXX)
 # tf2_standalone: A standalone wrapper around tf2::BufferCore
 #
 # This library wraps tf2's BufferCore to provide a ROS-agnostic API.
-# - Public API uses only tf2:: types (from tf2_types) + std::string
+# - Public API uses only tf2:: types (from tf2) + std::string
 # - Internal geometry_msgs conversions are hidden from users
 #
 # Build modes (controlled by BUILD_SHARED_LIBS):
@@ -37,29 +37,35 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
-target_link_libraries(${PROJECT_NAME}
-  PUBLIC
-    tf2::tf2
-  PRIVATE
-    ${geometry_msgs_TARGETS}
-)
-
-# For static builds, add rcutils stubs to avoid runtime dependencies
 if(NOT BUILD_SHARED_LIBS)
-  # Build rcutils_stubs as a separate static library
-  # Users need to link: tf2_standalone, tf2, rcutils_stubs (in that order)
+  # Static build: all deps are PRIVATE — they get bundled into a fat archive
+  target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+      tf2::tf2
+      ${geometry_msgs_TARGETS}
+  )
+  # tf2's public headers (LinearMath, time.hpp) are copied at install time,
+  # so consumers don't need find_package(tf2).
+  # We still need tf2's include dirs at build time for our own headers.
+  target_include_directories(${PROJECT_NAME}
+    PUBLIC
+      $<BUILD_INTERFACE:$<TARGET_PROPERTY:tf2::tf2,INTERFACE_INCLUDE_DIRECTORIES>>
+  )
+
+  # Build rcutils_stubs — these get merged into the fat archive
   add_library(rcutils_stubs STATIC src/rcutils_stubs.c)
   set_target_properties(rcutils_stubs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-  # Define to let code know we're in standalone mode if needed
   target_compile_definitions(${PROJECT_NAME} PRIVATE TF2_STANDALONE_STATIC_BUILD)
-
-  # Install the stubs library for static builds
-  install(TARGETS rcutils_stubs
-    EXPORT ${PROJECT_NAME}-targets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  )
 else()
+  # Shared build: tf2 is PUBLIC (consumer links dynamically)
+  target_link_libraries(${PROJECT_NAME}
+    PUBLIC
+      tf2::tf2
+    PRIVATE
+      ${geometry_msgs_TARGETS}
+  )
+
   # Shared library settings
   set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -77,13 +83,64 @@ set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-install(TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}-targets
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
-)
+if(BUILD_SHARED_LIBS)
+  install(TARGETS ${PROJECT_NAME}
+    EXPORT ${PROJECT_NAME}-targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+  )
+else()
+  # Static: install individual archives, then combine into a fat archive.
+  # We don't use EXPORT here — we write a custom targets file below.
+  install(TARGETS ${PROJECT_NAME} rcutils_stubs
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+  )
+
+  # Locate libtf2.a from the tf2 package
+  get_target_property(_tf2_type tf2::tf2 TYPE)
+  if(_tf2_type STREQUAL "STATIC_LIBRARY")
+    set(_tf2_archive "$<TARGET_FILE:tf2::tf2>")
+  else()
+    # tf2 was built as shared+static — look for the .a alongside the .so
+    get_target_property(_tf2_loc tf2::tf2 LOCATION)
+    get_filename_component(_tf2_libdir "${_tf2_loc}" DIRECTORY)
+    set(_tf2_archive "${_tf2_libdir}/libtf2.a")
+  endif()
+
+  # Create fat archive at install time: combine tf2_standalone + tf2 + rcutils_stubs
+  install(CODE "
+    set(_workdir \"\${CMAKE_INSTALL_PREFIX}/lib/_fat_archive_tmp\")
+    file(MAKE_DIRECTORY \${_workdir})
+
+    # Extract objects from each archive
+    foreach(_lib
+      \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
+      \"${_tf2_archive}\"
+      \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/librcutils_stubs.a\")
+      if(EXISTS \${_lib})
+        execute_process(COMMAND \${CMAKE_COMMAND} -E chdir \${_workdir}
+          ar x \${_lib} COMMAND_ERROR_IS_FATAL ANY)
+      else()
+        message(WARNING \"Fat archive: skipping missing \${_lib}\")
+      endif()
+    endforeach()
+
+    # Combine all objects into the final fat archive
+    file(GLOB _objects \"\${_workdir}/*.o\" \"\${_workdir}/*.obj\")
+    execute_process(COMMAND ar rcs
+      \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
+      \${_objects} COMMAND_ERROR_IS_FATAL ANY)
+
+    # Cleanup: remove temp dir and the separate rcutils_stubs archive
+    file(REMOVE_RECURSE \${_workdir})
+    file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/librcutils_stubs.a\")
+
+    message(STATUS \"Created fat archive: lib${PROJECT_NAME}.a\")
+  ")
+endif()
 
 install(DIRECTORY include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
@@ -118,12 +175,38 @@ install(DIRECTORY ${TF2_INCLUDE_DIR}/tf2/LinearMath
 install(FILES ${TF2_INCLUDE_DIR}/tf2/visibility_control.h
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
 
-install(EXPORT ${PROJECT_NAME}-targets
-  FILE ${PROJECT_NAME}-targets.cmake
-  NAMESPACE ${PROJECT_NAME}::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
-)
+# Install time.hpp from tf2 (needed by public API)
+install(FILES ${TF2_INCLUDE_DIR}/tf2/time.hpp
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
 
+if(BUILD_SHARED_LIBS)
+  install(EXPORT ${PROJECT_NAME}-targets
+    FILE ${PROJECT_NAME}-targets.cmake
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  )
+else()
+  # Static: write a custom targets file for the self-contained fat archive
+  install(CODE "
+    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-targets.cmake\" \"
+# Generated targets file for static tf2_standalone (fat archive)
+if(TARGET ${PROJECT_NAME}::${PROJECT_NAME})
+  return()
+endif()
+
+add_library(${PROJECT_NAME}::${PROJECT_NAME} STATIC IMPORTED)
+
+set_target_properties(${PROJECT_NAME}::${PROJECT_NAME} PROPERTIES
+  IMPORTED_LOCATION \\\"\\\${CMAKE_CURRENT_LIST_DIR}/../../lib${PROJECT_NAME}.a\\\"
+  INTERFACE_INCLUDE_DIRECTORIES \\\"\\\${CMAKE_CURRENT_LIST_DIR}/../../../include/${PROJECT_NAME}\\\"
+  INTERFACE_LINK_LIBRARIES \\\"pthread\\\"
+)
+\")
+    message(STATUS \"Wrote static targets file\")
+  ")
+endif()
+
+set(TF2_STANDALONE_SHARED ${BUILD_SHARED_LIBS})
 configure_package_config_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-config.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
@@ -167,7 +250,9 @@ endif()
 
 # Ament integration (for ROS2 builds)
 if(ament_cmake_FOUND)
-  ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
-  ament_export_dependencies(tf2)
+  if(BUILD_SHARED_LIBS)
+    ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
+    ament_export_dependencies(tf2)
+  endif()
   ament_package()
 endif()

@@ -1,7 +1,9 @@
 @PACKAGE_INIT@
 
-include(CMakeFindDependencyMacro)
-find_dependency(tf2_types)
+if(@TF2_STANDALONE_SHARED@)
+  include(CMakeFindDependencyMacro)
+  find_dependency(tf2)
+endif()
 
 include("${CMAKE_CURRENT_LIST_DIR}/tf2_standalone-targets.cmake")
 
