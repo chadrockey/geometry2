@@ -115,10 +115,6 @@ TransformBuffer::TransformBuffer(tf2::Duration cache_time)
 
 TransformBuffer::~TransformBuffer() = default;
 
-TransformBuffer::TransformBuffer(TransformBuffer && other) noexcept = default;
-
-TransformBuffer & TransformBuffer::operator=(TransformBuffer && other) noexcept = default;
-
 bool TransformBuffer::setTransform(
   const std::string & parent_frame,
   const std::string & child_frame,

@@ -240,26 +240,7 @@ TEST_F(TransformBufferTest, LookupException)
     tf2::LookupException);
 }
 
-TEST_F(TransformBufferTest, MoveConstruction)
-{
-  tf2::Transform transform = tf2::Transform::getIdentity();
-  buffer_->setTransform("world", "base", transform, base_time_);
 
-  tf2_standalone::TransformBuffer moved_buffer = std::move(*buffer_);
-
-  EXPECT_TRUE(moved_buffer.canTransform("world", "base", base_time_));
-}
-
-TEST_F(TransformBufferTest, MoveAssignment)
-{
-  tf2::Transform transform = tf2::Transform::getIdentity();
-  buffer_->setTransform("world", "base", transform, base_time_);
-
-  tf2_standalone::TransformBuffer moved_buffer;
-  moved_buffer = std::move(*buffer_);
-
-  EXPECT_TRUE(moved_buffer.canTransform("world", "base", base_time_));
-}
 
 TEST_F(TransformBufferTest, AllFramesAsString)
 {

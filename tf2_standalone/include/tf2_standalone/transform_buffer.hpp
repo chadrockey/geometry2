@@ -70,13 +70,11 @@ public:
    */
   ~TransformBuffer();
 
-  // Non-copyable
+  // Non-copyable, non-movable
   TransformBuffer(const TransformBuffer &) = delete;
   TransformBuffer & operator=(const TransformBuffer &) = delete;
-
-  // Movable
-  TransformBuffer(TransformBuffer && other) noexcept;
-  TransformBuffer & operator=(TransformBuffer && other) noexcept;
+  TransformBuffer(TransformBuffer &&) = delete;
+  TransformBuffer & operator=(TransformBuffer &&) = delete;
 
   /**
    * @brief Add a transform to the buffer.
