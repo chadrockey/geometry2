@@ -21,8 +21,12 @@ cd "${PKG_DIR}"
 ARCH=$(dpkg --print-architecture)
 MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH)
 LIBDIR="usr/lib/${MULTIARCH}"
-VERSION="1.0.0"
-SOVERSION="1"
+VERSION=$(sed -n 's/.*<version>\(.*\)<\/version>.*/\1/p' package.xml)
+if [[ -z "${VERSION}" ]]; then
+    echo "ERROR: Could not extract version from package.xml" >&2
+    exit 1
+fi
+SOVERSION="${VERSION%%.*}"
 
 echo "==> Building .debs for ${ARCH} (${MULTIARCH})"
 
@@ -95,7 +99,7 @@ echo "    Created libtf2_standalone.so.${VERSION} + symlinks"
 #   ../../../../include/tf2_standalone → usr/include/tf2_standalone (headers)
 echo "==> Step 3: Writing shared-library cmake targets file..."
 
-cat > "staging/${LIBDIR}/cmake/tf2_standalone/tf2_standalone-targets.cmake" << 'TARGETS_EOF'
+cat > "staging/${LIBDIR}/cmake/tf2_standalone/tf2_standalone-targets.cmake" << TARGETS_EOF
 # Generated targets file for tf2_standalone shared library (.deb)
 if(TARGET tf2_standalone::tf2_standalone)
   return()
@@ -104,9 +108,9 @@ endif()
 add_library(tf2_standalone::tf2_standalone SHARED IMPORTED)
 
 set_target_properties(tf2_standalone::tf2_standalone PROPERTIES
-  IMPORTED_LOCATION "${CMAKE_CURRENT_LIST_DIR}/../../libtf2_standalone.so.1.0.0"
-  IMPORTED_SONAME "libtf2_standalone.so.1"
-  INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_LIST_DIR}/../../../../include/tf2_standalone"
+  IMPORTED_LOCATION "\${CMAKE_CURRENT_LIST_DIR}/../../libtf2_standalone.so.${VERSION}"
+  IMPORTED_SONAME "libtf2_standalone.so.${SOVERSION}"
+  INTERFACE_INCLUDE_DIRECTORIES "\${CMAKE_CURRENT_LIST_DIR}/../../../../include/tf2_standalone"
 )
 TARGETS_EOF
 

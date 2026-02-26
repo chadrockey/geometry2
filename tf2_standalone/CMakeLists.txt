@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
-project(tf2_standalone VERSION 1.0.0 LANGUAGES C CXX)
+find_package(ament_cmake REQUIRED)
+ament_package_xml()
+project(tf2_standalone VERSION ${tf2_standalone_VERSION} LANGUAGES C CXX)
 
 # tf2_standalone: A standalone wrapper around tf2::BufferCore
 #
@@ -22,7 +24,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
 # Find dependencies
-find_package(ament_cmake QUIET)
 find_package(tf2 REQUIRED)
 # tf2 provides LinearMath headers - we copy them at install time
 find_package(geometry_msgs REQUIRED)
@@ -256,11 +257,5 @@ if(BUILD_TESTING)
   endif()
 endif()
 
-# Ament integration (for ROS2 builds)
-if(ament_cmake_FOUND)
-  if(BUILD_SHARED_LIBS)
-    ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
-    ament_export_dependencies(tf2)
-  endif()
-  ament_package()
-endif()
+# Ament is the build system, but this package is not intended for running in a ROS environment, so we don't declare any ROS dependencies or exports.
+ament_package()
