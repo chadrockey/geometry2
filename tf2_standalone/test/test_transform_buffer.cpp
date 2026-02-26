@@ -240,7 +240,47 @@ TEST_F(TransformBufferTest, LookupException)
     tf2::LookupException);
 }
 
+TEST_F(TransformBufferTest, InvalidArgumentExceptionEmptyFrame)
+{
+  // Populate the buffer so we hit argument validation, not "frame doesn't exist"
+  tf2::Transform transform = tf2::Transform::getIdentity();
+  buffer_->setTransform("world", "base", transform, base_time_);
 
+  EXPECT_THROW(
+    buffer_->lookupTransform("", "base", base_time_),
+    tf2::InvalidArgumentException);
+
+  EXPECT_THROW(
+    buffer_->lookupTransform("world", "", base_time_),
+    tf2::InvalidArgumentException);
+}
+
+TEST_F(TransformBufferTest, InvalidArgumentExceptionSlashPrefix)
+{
+  // Populate the buffer so we hit argument validation, not "frame doesn't exist"
+  tf2::Transform transform = tf2::Transform::getIdentity();
+  buffer_->setTransform("world", "base", transform, base_time_);
+
+  EXPECT_THROW(
+    buffer_->lookupTransform("/world", "base", base_time_),
+    tf2::InvalidArgumentException);
+
+  EXPECT_THROW(
+    buffer_->lookupTransform("world", "/base", base_time_),
+    tf2::InvalidArgumentException);
+}
+
+TEST_F(TransformBufferTest, ConnectivityException)
+{
+  tf2::Transform transform = tf2::Transform::getIdentity();
+  // Create two disconnected trees
+  EXPECT_TRUE(buffer_->setTransform("world", "base", transform, base_time_));
+  EXPECT_TRUE(buffer_->setTransform("other_root", "other_child", transform, base_time_));
+
+  EXPECT_THROW(
+    buffer_->lookupTransform("base", "other_child", base_time_),
+    tf2::ConnectivityException);
+}
 
 TEST_F(TransformBufferTest, AllFramesAsString)
 {
@@ -380,6 +420,23 @@ TEST_F(TransformBufferTest, ExtrapolationException)
   EXPECT_THROW(
     buffer_->lookupTransform("world", "base", future_time),
     tf2::ExtrapolationException);
+}
+
+TEST_F(TransformBufferTest, TimestampRoundTrip)
+{
+  // Verify our toMsg nanosecond arithmetic doesn't truncate or drift.
+  // Use a timestamp with non-trivial seconds and sub-second nanoseconds.
+  tf2::TimePoint stamp = tf2::TimePoint(std::chrono::seconds(1700000000) + 123456789ns);
+
+  tf2::Transform transform;
+  transform.setIdentity();
+  transform.setOrigin(tf2::Vector3(1.0, 2.0, 3.0));
+
+  EXPECT_TRUE(buffer_->setTransform("world", "base", transform, stamp));
+
+  // Lookup at the exact same timestamp should succeed (not extrapolate)
+  tf2::Transform result = buffer_->lookupTransform("world", "base", stamp);
+  EXPECT_TRUE(transformsEqual(result, transform));
 }
 
 int main(int argc, char ** argv)
