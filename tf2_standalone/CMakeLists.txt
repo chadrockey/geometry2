@@ -125,7 +125,7 @@ else()
           ar x \${_lib} COMMAND_ERROR_IS_FATAL ANY)
         math(EXPR _idx \"\${_idx} + 1\")
       else()
-        message(WARNING \"Fat archive: skipping missing \${_lib}\")
+        message(FATAL_ERROR \"Fat archive: missing required archive \${_lib}\")
       endif()
     endforeach()
 
