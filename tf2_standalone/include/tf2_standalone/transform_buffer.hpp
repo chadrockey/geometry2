@@ -54,7 +54,7 @@ static constexpr tf2::Duration DEFAULT_CACHE_TIME = std::chrono::seconds(10);
  * - tf2::TimePoint, tf2::Duration (std::chrono based)
  * - std::string for frame IDs
  *
- * All ROS message types (geometry_msgs) are hidden internally.
+ * All ROS message types (geometry_msgs) are hidden internally via the PIMPL idiom.
  */
 class TF2_STANDALONE_PUBLIC TransformBuffer
 {
