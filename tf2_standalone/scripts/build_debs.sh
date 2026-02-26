@@ -28,6 +28,13 @@ if [[ -z "${VERSION}" ]]; then
 fi
 SOVERSION="${VERSION%%.*}"
 
+cleanup() {
+    rm -rf staging build_deb build_deb_tf2 build_deb_tf2_prefix \
+        "libtf2-standalone1_${VERSION}_${ARCH}" \
+        "libtf2-standalone-dev_${VERSION}_${ARCH}"
+}
+trap cleanup EXIT
+
 echo "==> Building .debs for ${ARCH} (${MULTIARCH})"
 
 # --- Step 0: Build tf2 with -fPIC ---
@@ -186,9 +193,6 @@ cp -a staging/usr/include/tf2_standalone "${PKG_DEV}/usr/include/"
 
 dpkg-deb --build --root-owner-group "${PKG_DEV}"
 echo "    Built ${PKG_DEV}.deb"
-
-# --- Cleanup ---
-rm -rf staging build_deb build_deb_tf2 build_deb_tf2_prefix "${PKG_RUNTIME}" "${PKG_DEV}"
 
 echo ""
 echo "========================================"
