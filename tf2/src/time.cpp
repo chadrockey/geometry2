@@ -29,11 +29,13 @@
 /** \author Tully Foote */
 
 #include <chrono>
+#include <cmath>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
-#include "rcutils/snprintf.h"
-#include "rcutils/strerror.h"
 #include "tf2/time.hpp"
 
 tf2::TimePoint tf2::get_now()
@@ -82,31 +84,8 @@ double tf2::timeToSec(const tf2::TimePoint & timepoint)
 
 std::string tf2::displayTimePoint(const tf2::TimePoint & stamp)
 {
-  const char * format_str = "%.6f";
   double current_time = tf2::timeToSec(stamp);
-
-  // Determine how many bytes to allocate for the string. If successful, buff_size does not count
-  // null terminating character. http://www.cplusplus.com/reference/cstdio/snprintf/
-  int buff_size = rcutils_snprintf(nullptr, 0, format_str, current_time);
-  if (buff_size < 0) {
-    char errmsg[200];
-    rcutils_strerror(errmsg, sizeof(errmsg));
-    throw std::runtime_error(errmsg);
-  }
-
-  // Increase by one for null-terminating character
-  ++buff_size;
-  char * buffer = new char[buff_size];
-
-  // Write to the string. buffer size must accommodate the null-terminating character
-  int bytes_written = rcutils_snprintf(buffer, buff_size, format_str, current_time);
-  if (bytes_written < 0) {
-    delete[] buffer;
-    char errmsg[200];
-    rcutils_strerror(errmsg, sizeof(errmsg));
-    throw std::runtime_error(errmsg);
-  }
-  std::string result = std::string(buffer);
-  delete[] buffer;
-  return result;
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(6) << current_time;
+  return ss.str();
 }
