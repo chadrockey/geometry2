@@ -194,6 +194,10 @@ tf2::Duration TransformBuffer::getCacheLength() const
 
 bool TransformBuffer::frameExists(const std::string & frame_id) const
 {
+  // _frameExists is in tf2's "backwards compatibility" section (not formally
+  // deprecated, but underscore-prefixed). No proper public replacement exists;
+  // getAllFrameNames() would work but is O(n). Acceptable here because we
+  // control the tf2 fork bundled in this repo.
   return impl_->buffer_core_._frameExists(frame_id);
 }
 
