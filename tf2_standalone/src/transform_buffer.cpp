@@ -37,7 +37,6 @@
 // Internal includes (hidden from users)
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "tf2/buffer_core.hpp"
-#include "tf2/exceptions.hpp"
 
 namespace tf2_standalone
 {
@@ -99,26 +98,6 @@ tf2::Transform fromMsg(const geometry_msgs::msg::TransformStamped & msg)
   return tf2::Transform(rotation, origin);
 }
 
-// Convert tf2 exceptions to tf2_standalone exceptions
-void rethrowException()
-{
-  try {
-    throw;
-  } catch (const tf2::LookupException & e) {
-    throw LookupException(e.what());
-  } catch (const tf2::ConnectivityException & e) {
-    throw ConnectivityException(e.what());
-  } catch (const tf2::ExtrapolationException & e) {
-    throw ExtrapolationException(e.what());
-  } catch (const tf2::InvalidArgumentException & e) {
-    throw InvalidArgumentException(e.what());
-  } catch (const tf2::TimeoutException & e) {
-    throw TimeoutException(e.what());
-  } catch (const tf2::TransformException & e) {
-    throw TransformException(e.what());
-  }
-}
-
 }  // namespace
 
 // PIMPL implementation
@@ -161,14 +140,8 @@ tf2::Transform TransformBuffer::lookupTransform(
   const std::string & source_frame,
   tf2::TimePoint time) const
 {
-  try {
-    auto msg = impl_->buffer_core_.lookupTransform(target_frame, source_frame, time);
-    return fromMsg(msg);
-  } catch (...) {
-    rethrowException();
-  }
-  // Should never reach here, but needed to satisfy compiler
-  return tf2::Transform::getIdentity();
+  auto msg = impl_->buffer_core_.lookupTransform(target_frame, source_frame, time);
+  return fromMsg(msg);
 }
 
 tf2::Transform TransformBuffer::lookupTransform(
@@ -178,17 +151,11 @@ tf2::Transform TransformBuffer::lookupTransform(
   tf2::TimePoint source_time,
   const std::string & fixed_frame) const
 {
-  try {
-    auto msg = impl_->buffer_core_.lookupTransform(
-      target_frame, target_time,
-      source_frame, source_time,
-      fixed_frame);
-    return fromMsg(msg);
-  } catch (...) {
-    rethrowException();
-  }
-  // Should never reach here, but needed to satisfy compiler
-  return tf2::Transform::getIdentity();
+  auto msg = impl_->buffer_core_.lookupTransform(
+    target_frame, target_time,
+    source_frame, source_time,
+    fixed_frame);
+  return fromMsg(msg);
 }
 
 bool TransformBuffer::canTransform(

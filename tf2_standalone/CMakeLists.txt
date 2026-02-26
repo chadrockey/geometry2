@@ -179,6 +179,10 @@ install(FILES ${TF2_INCLUDE_DIR}/tf2/visibility_control.h
 install(FILES ${TF2_INCLUDE_DIR}/tf2/time.hpp
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
 
+# Install exceptions.hpp from tf2 (needed by public API)
+install(FILES ${TF2_INCLUDE_DIR}/tf2/exceptions.hpp
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
+
 if(BUILD_SHARED_LIBS)
   install(EXPORT ${PROJECT_NAME}-targets
     FILE ${PROJECT_NAME}-targets.cmake

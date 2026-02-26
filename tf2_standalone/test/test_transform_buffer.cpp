@@ -34,7 +34,7 @@
 #include <vector>
 
 #include "tf2_standalone/transform_buffer.hpp"
-#include "tf2_standalone/exceptions.hpp"
+#include "tf2/exceptions.hpp"
 
 using namespace std::chrono_literals;
 
@@ -237,7 +237,7 @@ TEST_F(TransformBufferTest, LookupException)
 {
   EXPECT_THROW(
     buffer_->lookupTransform("world", "nonexistent", base_time_),
-    tf2_standalone::LookupException);
+    tf2::LookupException);
 }
 
 TEST_F(TransformBufferTest, MoveConstruction)
