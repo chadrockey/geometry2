@@ -85,7 +85,8 @@ public:
    * @param stamp The timestamp of the transform
    * @param authority The source of this transform (for debugging)
    * @param is_static If true, this transform is constant over time
-   * @return true if the transform was successfully added
+   * @return true if the transform was successfully added; false if a frame ID
+   *         is empty, starts with '/', or the transform contains NaN values
    */
   bool setTransform(
     const std::string & parent_frame,
@@ -120,7 +121,8 @@ public:
    * @param target_time The time at which the target frame should be evaluated
    * @param source_frame The frame to transform from
    * @param source_time The time at which the source frame should be evaluated
-   * @param fixed_frame The frame in which to assume the transform is constant
+   * @param fixed_frame The frame used to bridge the two time queries
+   *        (target_frame→fixed_frame at target_time, fixed_frame→source_frame at source_time)
    * @return The transform from source_frame to target_frame
    * @throws tf2::InvalidArgumentException if a frame ID is empty or starts with '/'
    * @throws tf2::LookupException if a frame doesn't exist
@@ -157,7 +159,8 @@ public:
    * @param target_time The time at which the target frame should be evaluated
    * @param source_frame The frame to transform from
    * @param source_time The time at which the source frame should be evaluated
-   * @param fixed_frame The frame in which to assume the transform is constant
+   * @param fixed_frame The frame used to bridge the two time queries
+   *        (target_frame→fixed_frame at target_time, fixed_frame→source_frame at source_time)
    * @param error_msg If not null, filled with an error message on failure
    * @return true if the transform is available
    */
