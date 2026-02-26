@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(tf2_types)
+
+include("${CMAKE_CURRENT_LIST_DIR}/tf2_standalone-targets.cmake")
+
+check_required_components(tf2_standalone)

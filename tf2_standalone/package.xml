@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>tf2_standalone</name>
+  <version>1.0.0</version>
+  <description>
+    Standalone wrapper around tf2::BufferCore with a ROS-agnostic API.
+
+    This library provides coordinate transform capabilities without requiring
+    ROS headers or libraries at runtime. The public API uses only:
+    - tf2::Transform, tf2::Quaternion, tf2::Vector3 (from tf2_types)
+    - tf2::TimePoint, tf2::Duration (std::chrono based, from tf2_types)
+    - std::string for frame IDs
+
+    Builds both static (.a) and self-contained shared (.so) libraries.
+    The shared library has no runtime dependencies on ROS shared libraries.
+  </description>
+
+  <maintainer email="chadrockey@gmail.com">Chad Rockey</maintainer>
+  <license>BSD-3-Clause</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Build dependencies (not needed at runtime) -->
+  <build_depend>tf2</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+
+  <!-- Runtime dependency (header-only, zero deps) -->
+  <depend>tf2_types</depend>
+
+  <!-- Test dependencies -->
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
