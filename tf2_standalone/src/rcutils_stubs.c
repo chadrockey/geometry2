@@ -55,6 +55,10 @@
 #include <string.h>
 #include <time.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
