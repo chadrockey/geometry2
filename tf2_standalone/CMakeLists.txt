@@ -115,21 +115,25 @@ else()
     set(_workdir \"\${CMAKE_INSTALL_PREFIX}/lib/_fat_archive_tmp\")
     file(MAKE_DIRECTORY \${_workdir})
 
-    # Extract objects from each archive
+    # Extract objects from each archive into separate subdirs to avoid name collisions
+    set(_idx 0)
     foreach(_lib
       \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
       \"${_tf2_archive}\"
       \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/librcutils_stubs.a\")
       if(EXISTS \${_lib})
-        execute_process(COMMAND \${CMAKE_COMMAND} -E chdir \${_workdir}
+        set(_subdir \"\${_workdir}/\${_idx}\")
+        file(MAKE_DIRECTORY \${_subdir})
+        execute_process(COMMAND \${CMAKE_COMMAND} -E chdir \${_subdir}
           ar x \${_lib} COMMAND_ERROR_IS_FATAL ANY)
+        math(EXPR _idx \"\${_idx} + 1\")
       else()
         message(WARNING \"Fat archive: skipping missing \${_lib}\")
       endif()
     endforeach()
 
     # Combine all objects into the final fat archive
-    file(GLOB _objects \"\${_workdir}/*.o\" \"\${_workdir}/*.obj\")
+    file(GLOB_RECURSE _objects \"\${_workdir}/*.o\" \"\${_workdir}/*.obj\")
     execute_process(COMMAND ar rcs
       \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/lib${PROJECT_NAME}.a\"
       \${_objects} COMMAND_ERROR_IS_FATAL ANY)
