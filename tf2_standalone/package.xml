@@ -8,12 +8,12 @@
 
     This library provides coordinate transform capabilities without requiring
     ROS headers or libraries at runtime. The public API uses only:
-    - tf2::Transform, tf2::Quaternion, tf2::Vector3 (from tf2_types)
-    - tf2::TimePoint, tf2::Duration (std::chrono based, from tf2_types)
+    - tf2::Transform, tf2::Quaternion, tf2::Vector3 (LinearMath types from tf2)
+    - tf2::TimePoint, tf2::Duration (std::chrono based, vendored time.hpp)
     - std::string for frame IDs
 
-    Builds both static (.a) and self-contained shared (.so) libraries.
-    The shared library has no runtime dependencies on ROS shared libraries.
+    At build time, copies tf2's LinearMath headers. Vendors time.hpp to avoid
+    rcutils runtime dependency. Builds both static and shared libraries.
   </description>
 
   <maintainer email="chadrockey@gmail.com">Chad Rockey</maintainer>
@@ -24,9 +24,6 @@
   <!-- Build dependencies (not needed at runtime) -->
   <build_depend>tf2</build_depend>
   <build_depend>geometry_msgs</build_depend>
-
-  <!-- Runtime dependency (header-only, zero deps) -->
-  <depend>tf2_types</depend>
 
   <!-- Test dependencies -->
   <test_depend>ament_cmake_gtest</test_depend>

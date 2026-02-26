@@ -26,8 +26,11 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef TF2__TIME_H_
-#define TF2__TIME_H_
+// Vendored header-only time.hpp for tf2_standalone
+// Same API as tf2/time.hpp but with inline implementations (no rcutils dependency)
+
+#ifndef TF2__TIME_HPP_
+#define TF2__TIME_HPP_
 
 #include <chrono>
 #include <cmath>
@@ -92,4 +95,4 @@ inline std::string displayTimePoint(const TimePoint & stamp)
 
 }  // namespace tf2
 
-#endif  // TF2__TIME_H_
+#endif  // TF2__TIME_HPP_

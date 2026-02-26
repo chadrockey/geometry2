@@ -24,7 +24,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # Find dependencies
 find_package(ament_cmake QUIET)
 find_package(tf2 REQUIRED)
-find_package(tf2_types REQUIRED)
+# tf2 provides LinearMath headers - we copy them at install time
 find_package(geometry_msgs REQUIRED)
 
 # Main library - respects BUILD_SHARED_LIBS automatically
@@ -39,7 +39,6 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
-    tf2_types::tf2_types
     tf2::tf2
   PRIVATE
     ${geometry_msgs_TARGETS}
@@ -89,6 +88,35 @@ install(TARGETS ${PROJECT_NAME}
 install(DIRECTORY include/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
+
+# Copy tf2's LinearMath headers at install time (avoids duplicating them in source)
+get_target_property(TF2_INCLUDE_DIRS tf2::tf2 INTERFACE_INCLUDE_DIRECTORIES)
+# Handle generator expressions - extract the actual path (BUILD_INTERFACE or INSTALL_INTERFACE)
+set(TF2_INCLUDE_DIR "")
+foreach(_dir ${TF2_INCLUDE_DIRS})
+  if(_dir MATCHES "\\$<BUILD_INTERFACE:(.+)>")
+    set(TF2_INCLUDE_DIR "${CMAKE_MATCH_1}")
+    break()
+  elseif(_dir MATCHES "\\$<INSTALL_INTERFACE:(.+)>")
+    # Skip install interface, prefer build interface
+  elseif(IS_DIRECTORY "${_dir}/tf2/LinearMath")
+    # Plain path (from installed package)
+    set(TF2_INCLUDE_DIR "${_dir}")
+    break()
+  endif()
+endforeach()
+
+if(TF2_INCLUDE_DIR STREQUAL "")
+  message(FATAL_ERROR "Could not find tf2 include directory")
+endif()
+
+# Install LinearMath from tf2
+install(DIRECTORY ${TF2_INCLUDE_DIR}/tf2/LinearMath
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
+
+# Install visibility_control.h from tf2
+install(FILES ${TF2_INCLUDE_DIR}/tf2/visibility_control.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/tf2)
 
 install(EXPORT ${PROJECT_NAME}-targets
   FILE ${PROJECT_NAME}-targets.cmake
@@ -140,6 +168,6 @@ endif()
 # Ament integration (for ROS2 builds)
 if(ament_cmake_FOUND)
   ament_export_targets(${PROJECT_NAME}-targets HAS_LIBRARY_TARGET)
-  ament_export_dependencies(tf2_types tf2)
+  ament_export_dependencies(tf2)
   ament_package()
 endif()
