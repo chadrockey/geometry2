@@ -83,7 +83,7 @@ public:
    *
    * @param parent_frame The parent frame ID
    * @param child_frame The child frame ID
-   * @param transform The transform from parent to child
+   * @param transform The transform that takes points from child to parent frame
    * @param stamp The timestamp of the transform
    * @param authority The source of this transform (for debugging)
    * @param is_static If true, this transform is constant over time

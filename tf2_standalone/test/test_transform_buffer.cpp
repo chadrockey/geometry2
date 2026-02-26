@@ -293,6 +293,103 @@ TEST_F(TransformBufferTest, TimePointZeroGetsLatest)
   EXPECT_TRUE(vectorsEqual(result.getOrigin(), tf2::Vector3(2.0, 0.0, 0.0)));
 }
 
+TEST_F(TransformBufferTest, LookupTransformFiveArgTimeTravelThroughFixedFrame)
+{
+  // Scenario: a moving "base" frame relative to a fixed "world" frame,
+  // with a static "sensor" attached to "base".
+  // Query: where was "sensor" at source_time, expressed in "world" at target_time?
+  // The fixed_frame bridges the two time queries.
+
+  // world -> base at t=0: base is at (1, 0, 0)
+  tf2::Transform world_base_t0;
+  world_base_t0.setIdentity();
+  world_base_t0.setOrigin(tf2::Vector3(1.0, 0.0, 0.0));
+  EXPECT_TRUE(buffer_->setTransform("world", "base", world_base_t0, base_time_));
+
+  // world -> base at t=1: base has moved to (3, 0, 0)
+  tf2::Transform world_base_t1;
+  world_base_t1.setIdentity();
+  world_base_t1.setOrigin(tf2::Vector3(3.0, 0.0, 0.0));
+  EXPECT_TRUE(buffer_->setTransform("world", "base", world_base_t1, base_time_ + 1s));
+
+  // base -> sensor: static offset (0, 1, 0)
+  tf2::Transform base_sensor;
+  base_sensor.setIdentity();
+  base_sensor.setOrigin(tf2::Vector3(0.0, 1.0, 0.0));
+  EXPECT_TRUE(buffer_->setTransform("base", "sensor", base_sensor, base_time_, "test", true));
+
+  // 5-arg lookup: sensor at source_time=t0, expressed in world at target_time=t1
+  // fixed_frame="world" bridges the two instants.
+  // Result = world_base(t1)^-1 * world_base(t0) * base_sensor
+  //        = inverse(translate(3,0,0)) * translate(1,0,0) * translate(0,1,0)
+  //        = translate(-3,0,0) * translate(1,1,0)
+  //        = translate(-2,1,0)
+  tf2::Transform result = buffer_->lookupTransform(
+    "world", base_time_ + 1s,
+    "sensor", base_time_,
+    "world");
+
+  // sensor was at (1,1,0) in world at t=0.
+  // The 5-arg form re-expresses that in the world frame at t=1, which for a
+  // fixed "world" frame gives the same result: (1,1,0).
+  EXPECT_TRUE(vectorsEqual(result.getOrigin(), tf2::Vector3(1.0, 1.0, 0.0)));
+}
+
+TEST_F(TransformBufferTest, CanTransformFiveArgTimeTravelThroughFixedFrame)
+{
+  // Set up the same scenario as the 5-arg lookupTransform test
+  tf2::Transform world_base_t0;
+  world_base_t0.setIdentity();
+  world_base_t0.setOrigin(tf2::Vector3(1.0, 0.0, 0.0));
+  EXPECT_TRUE(buffer_->setTransform("world", "base", world_base_t0, base_time_));
+
+  tf2::Transform world_base_t1;
+  world_base_t1.setIdentity();
+  world_base_t1.setOrigin(tf2::Vector3(3.0, 0.0, 0.0));
+  EXPECT_TRUE(buffer_->setTransform("world", "base", world_base_t1, base_time_ + 1s));
+
+  tf2::Transform base_sensor;
+  base_sensor.setIdentity();
+  base_sensor.setOrigin(tf2::Vector3(0.0, 1.0, 0.0));
+  EXPECT_TRUE(buffer_->setTransform("base", "sensor", base_sensor, base_time_, "test", true));
+
+  // Should succeed: all frames exist and times are in range
+  EXPECT_TRUE(buffer_->canTransform(
+    "world", base_time_ + 1s,
+    "sensor", base_time_,
+    "world"));
+
+  // Should fail: nonexistent target frame
+  EXPECT_FALSE(buffer_->canTransform(
+    "nonexistent", base_time_ + 1s,
+    "sensor", base_time_,
+    "world"));
+
+  // Should fail with error message
+  std::string error_msg;
+  EXPECT_FALSE(buffer_->canTransform(
+    "nonexistent", base_time_ + 1s,
+    "sensor", base_time_,
+    "world", &error_msg));
+  EXPECT_FALSE(error_msg.empty());
+}
+
+TEST_F(TransformBufferTest, ExtrapolationException)
+{
+  tf2::Transform transform;
+  transform.setIdentity();
+  transform.setOrigin(tf2::Vector3(1.0, 0.0, 0.0));
+
+  // Add a single non-static transform at base_time_
+  EXPECT_TRUE(buffer_->setTransform("world", "base", transform, base_time_));
+
+  // Querying far outside the cache window should throw ExtrapolationException
+  tf2::TimePoint future_time = base_time_ + std::chrono::seconds(100);
+  EXPECT_THROW(
+    buffer_->lookupTransform("world", "base", future_time),
+    tf2::ExtrapolationException);
+}
+
 int main(int argc, char ** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
