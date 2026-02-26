@@ -36,6 +36,11 @@
 #include "tf2_standalone/transform_buffer.hpp"
 #include "tf2/exceptions.hpp"
 
+static_assert(!std::is_copy_constructible_v<tf2_standalone::TransformBuffer>);
+static_assert(!std::is_copy_assignable_v<tf2_standalone::TransformBuffer>);
+static_assert(!std::is_move_constructible_v<tf2_standalone::TransformBuffer>);
+static_assert(!std::is_move_assignable_v<tf2_standalone::TransformBuffer>);
+
 using namespace std::chrono_literals;
 
 namespace
