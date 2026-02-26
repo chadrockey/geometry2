@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
+project(tf2_standalone LANGUAGES C CXX)
 find_package(ament_cmake REQUIRED)
 ament_package_xml()
-project(tf2_standalone VERSION ${tf2_standalone_VERSION} LANGUAGES C CXX)
+set(PROJECT_VERSION ${tf2_standalone_VERSION})
 
 # tf2_standalone: A standalone wrapper around tf2::BufferCore
 #
@@ -195,24 +196,15 @@ if(BUILD_SHARED_LIBS)
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
   )
 else()
-  # Static: write a custom targets file for the self-contained fat archive
-  install(CODE "
-    file(WRITE \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}/${PROJECT_NAME}-targets.cmake\" \"
-# Generated targets file for static tf2_standalone (fat archive)
-if(TARGET ${PROJECT_NAME}::${PROJECT_NAME})
-  return()
-endif()
-
-add_library(${PROJECT_NAME}::${PROJECT_NAME} STATIC IMPORTED)
-
-set_target_properties(${PROJECT_NAME}::${PROJECT_NAME} PROPERTIES
-  IMPORTED_LOCATION \\\"\\\${CMAKE_CURRENT_LIST_DIR}/../../lib${PROJECT_NAME}.a\\\"
-  INTERFACE_INCLUDE_DIRECTORIES \\\"\\\${CMAKE_CURRENT_LIST_DIR}/../../../include/${PROJECT_NAME}\\\"
-  INTERFACE_LINK_LIBRARIES \\\"pthread\\\"
-)
-\")
-    message(STATUS \"Wrote static targets file\")
-  ")
+  # Static: generate a custom targets file for the self-contained fat archive
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${PROJECT_NAME}-targets-static.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
+    @ONLY
+  )
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-targets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
+  )
 endif()
 
 set(TF2_STANDALONE_SHARED ${BUILD_SHARED_LIBS})
