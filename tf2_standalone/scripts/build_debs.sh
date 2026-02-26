@@ -78,7 +78,7 @@ echo "    Fat archive built and installed to staging/"
 # --- Step 2: Create the fat .so from the fat .a ---
 echo "==> Step 2: Creating shared library from fat archive..."
 
-cc -shared -o "staging/${LIBDIR}/libtf2_standalone.so.${VERSION}" \
+${CXX:-c++} -shared -o "staging/${LIBDIR}/libtf2_standalone.so.${VERSION}" \
     -Wl,-soname,"libtf2_standalone.so.${SOVERSION}" \
     -Wl,--whole-archive "staging/${LIBDIR}/libtf2_standalone.a" -Wl,--no-whole-archive \
     -lpthread
